@@ -1,0 +1,40 @@
+name: digital_clock
+description: Digital clock.
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_clock_helper:
+    path: ../flutter_clock_helper
+  cupertino_icons: ^0.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Tomorrow
+      fonts:
+        - asset: fonts/Tomorrow-Regular.ttf
+          style: normal
+    - family: Solway
+      fonts:
+        - asset: fonts/Solway-Regular.ttf
+    - family: Orbitron
+      fonts:
+        - asset: fonts/Orbitron-Regular.ttf
+    - family: Monoton
+      fonts:
+        - asset: fonts/Monoton-Regular.ttf
+    - family: Exo2
+      fonts:
+        - asset: fonts/Exo2-Regular.ttf
+    - family: Autowide
+      fonts:
+        - asset: fonts/Autowide-Regular.ttf

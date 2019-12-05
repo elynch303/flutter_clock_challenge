@@ -124,7 +124,7 @@ class _AnalogClockState extends State<AnalogClock> {
           Text(hour +":"+minute),
           Text(_temperature),
           Text(_temperatureRange),
-          //Text(_condition),
+          Text(_condition),
           Text(_location),
         ],
       ),
