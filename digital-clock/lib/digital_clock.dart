@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:html';
 
 import 'package:flutter_clock_helper/model.dart';
 import 'package:flutter/material.dart';
@@ -15,15 +16,15 @@ enum _Element {
 }
 
 final _lightTheme = {
-  _Element.background: Color(0xFF81B3FE),
-  _Element.text: Colors.white,
-  _Element.shadow: Colors.black,
+  _Element.background: Colors.white,
+  _Element.text: Colors.redAccent,
+  _Element.shadow: Colors.black45,
 };
 
 final _darkTheme = {
   _Element.background: Colors.black,
-  _Element.text: Colors.white,
-  _Element.shadow: Color(0xFF174EA6),
+  _Element.text: Colors.redAccent,
+  _Element.shadow: Colors.white54,
 };
 
 /// A basic digital clock.
@@ -45,6 +46,7 @@ class _DigitalClockState extends State<DigitalClock> {
   var _temperatureRange = '';
   var _condition = '';
   var _location = '';
+  double opacity = 0.0;
 
   @override
   void initState() {
@@ -81,62 +83,116 @@ class _DigitalClockState extends State<DigitalClock> {
       
     });
   }
-
+  void _pulse() {
+    if(opacity == 0.0){opacity = 1;}
+    else{ opacity = 0.0;}
+  }
+  
   void _updateTime() {
     setState(() {
       _dateTime = DateTime.now();
       // Update once per minute. If you want to update every second, use the
       // following code.
-      _timer = Timer(
-        Duration(minutes: 1) -
-            Duration(seconds: _dateTime.second) -
-            Duration(milliseconds: _dateTime.millisecond),
-        _updateTime,
-      );
-      // Update once per second, but make sure to do it at the beginning of each
-      // new second, so that the clock is accurate.
       // _timer = Timer(
-      //   Duration(seconds: 1) - Duration(milliseconds: _dateTime.millisecond),
+      //   Duration(minutes: 1) -
+      //       Duration(seconds: _dateTime.second) -
+      //       Duration(milliseconds: _dateTime.millisecond),
       //   _updateTime,
       // );
+      // Update once per second, but make sure to do it at the beginning of each
+      // new second, so that the clock is accurate.
+      _timer = Timer(
+        Duration(seconds: 1) - Duration(milliseconds: _dateTime.millisecond),
+        _updateTime,
+      );
+      _pulse();
     });
+  }
+
+  _getWetherImage(condition){
+    switch(condition){
+      case "cloudy":{
+        return Image.asset("assets/img/weather/cloudy.png");
+      }break;
+      case "foggy":{
+        return Image.asset("assets/img/weather/foggy.png");
+      }break;
+      case "rainy":{
+        return Image.asset("assets/img/weather/rainy.png");
+      }break;
+      case "snowy":{
+        return Image.asset("assets/img/weather/snowy.png");
+      }break;
+      case "sunny":{
+        return Image.asset("assets/img/weather/sunny.png");
+      }break;
+      case "thunder":{
+        return Image.asset("assets/img/weather/thunder.png");
+      }break;
+      case "windy":{
+        return Image.asset("assets/img/weather/windy.png");
+      }break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.light
-        ? _lightTheme
-        : _darkTheme;
-    final hour =
-        DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
+    final colors = Theme.of(context).brightness == Brightness.light ? _lightTheme : _darkTheme;
+    final hour = DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
     final minute = DateFormat('mm').format(_dateTime);
+    final second = DateFormat('ss').format(_dateTime);
+    final fontSize = MediaQuery.of(context).size.width / 4;
+    final offset = -fontSize / 90;
+    shadow(br, odx, ody, color){
+      return  Shadow(
+        blurRadius: br,
+        color: color,
+        offset: Offset(odx, ody),
+      );
+    } 
+    final defaultStyle = TextStyle(
+      color: colors[_Element.text],
+      fontFamily: 'Monoton',
+      fontSize: fontSize,
+      shadows: [shadow(0,10,0, colors[_Element.shadow])],
+    );
+    final dividerStyle = TextStyle(
+      color: colors[_Element.text],
+      fontFamily: 'Tomorrow',
+      fontSize: fontSize,
+      shadows: [shadow(0,10,0, colors[_Element.shadow])],
+    );
+    final infoStyle = TextStyle(
+      color: Colors.redAccent,
+      fontFamily: 'Tomorrow',
+      fontSize: MediaQuery.of(context).size.width / 40,
+      shadows: [shadow(0,2,0, Colors.black)],
+    );
+    final clock = Row( 
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        DefaultTextStyle(style: defaultStyle, child: Text(hour)),
+        AnimatedOpacity(
+          duration: Duration(milliseconds: 500),
+          opacity: opacity,
+          child: Padding(padding: EdgeInsets.fromLTRB(0, 0, 0, fontSize / 4), child: DefaultTextStyle(style: dividerStyle, child: Text(":"))), 
+        ),
+        DefaultTextStyle(style: defaultStyle, child: Text(minute)),
+      ],
+    );
     final weatherInfo = DefaultTextStyle(
-      style: TextStyle(color: colors[_Element.text]),
+      style: infoStyle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_temperature),
           Text(_temperatureRange),
-          Text(_condition),
+          _getWetherImage(_condition),
           Text(_location),
         ],
       ),
     );
-    final fontSize = MediaQuery.of(context).size.width / 2.5;
-    final offset = -fontSize / 9;
-    final defaultStyle = TextStyle(
-      color: colors[_Element.text],
-      fontFamily: 'Tomorrow',
-      fontSize: fontSize,
-      shadows: [
-        Shadow(
-          blurRadius: 0,
-          color: colors[_Element.shadow],
-          offset: Offset(10, 0),
-        ),
-      ],
-    );
-
     return Container(
       color: colors[_Element.background],
       child: Center(
@@ -144,9 +200,8 @@ class _DigitalClockState extends State<DigitalClock> {
           style: defaultStyle,
           child: Stack(
             children: <Widget>[
-              Positioned(left: offset, top: 0, child: Text(hour)),
-              Positioned(right: offset, bottom: offset, child: Text(minute)),
-              Positioned(left: 0, bottom: 0, child: Padding(padding: const EdgeInsets.all(8),child: weatherInfo,),
+              Container(alignment: Alignment.center, child: clock),
+              Positioned(left: 0, bottom: 0, child: Padding(padding: const EdgeInsets.all(8),child: weatherInfo),
             ),
             ],
           ),
@@ -155,3 +210,5 @@ class _DigitalClockState extends State<DigitalClock> {
     );
   }
 }
+
+

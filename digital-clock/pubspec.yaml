@@ -21,20 +21,21 @@ flutter:
   fonts:
     - family: Tomorrow
       fonts:
-        - asset: fonts/Tomorrow-Regular.ttf
-          style: normal
+        - asset: assets/fonts/Tomorrow-Regular.ttf
     - family: Solway
       fonts:
-        - asset: fonts/Solway-Regular.ttf
+        - asset: assets/fonts/Solway-Regular.ttf
     - family: Orbitron
       fonts:
-        - asset: fonts/Orbitron-Regular.ttf
+        - asset: assets/fonts/Orbitron-Regular.ttf
     - family: Monoton
       fonts:
-        - asset: fonts/Monoton-Regular.ttf
+        - asset: assets/fonts/Monoton-Regular.ttf
     - family: Exo2
       fonts:
-        - asset: fonts/Exo2-Regular.ttf
-    - family: Autowide
+        - asset: assets/fonts/Exo2-Regular.ttf
+    - family: Audiowide
       fonts:
-        - asset: fonts/Autowide-Regular.ttf
+        - asset: assets/fonts/Audiowide-Regular.ttf
+  assets:
+    - assets/img/weather/
