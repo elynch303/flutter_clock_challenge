@@ -3,23 +3,62 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:html';
 
 import 'package:flutter_clock_helper/model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:intl/intl.dart';
-import 'package:vector_math/vector_math_64.dart' show radians;
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
-import 'container_hand.dart';
-import 'drawn_hand.dart';
 
-/// Total distance traveled by a second or a minute hand, each second or minute,
-/// respectively.
-final radiansPerTick = radians(360 / 60);
+enum _Element {
+  background, text, shadow, hour, minute, second,
+}
 
-/// Total distance traveled by an hour hand, each hour, in radians.
-final radiansPerHour = radians(360 / 12);
+final _lightTheme = {
+  _Element.background: Colors.white,
+  _Element.text: Colors.redAccent,
+  _Element.shadow: Colors.black45,
+  _Element.hour: Colors.pinkAccent,
+  _Element.minute: Colors.cyanAccent,
+  _Element.second: Colors.orangeAccent,
+};
+
+final _darkTheme = {
+  _Element.background: Colors.black,
+  _Element.text: Colors.red,
+  _Element.shadow: Colors.white54,
+  _Element.hour: Colors.pink,
+  _Element.minute: Colors.cyan,
+  _Element.second: Colors.orange,
+};
+
+_getWetherImage(condition){
+  switch(condition){
+    case "cloudy":{
+      return Image.asset("assets/img/weather/cloudy.png");
+    }break;
+    case "foggy":{
+      return Image.asset("assets/img/weather/foggy.png");
+    }break;
+    case "rainy":{
+      return Image.asset("assets/img/weather/rainy.png");
+    }break;
+    case "snowy":{
+      return Image.asset("assets/img/weather/snowy.png");
+    }break;
+    case "sunny":{
+      return Image.asset("assets/img/weather/sunny.png");
+    }break;
+    case "thunder":{
+      return Image.asset("assets/img/weather/thunder.png");
+    }break;
+    case "windy":{
+      return Image.asset("assets/img/weather/windy.png");
+    }break;
+  }
+}
 
 /// A basic analog clock.
 ///
@@ -40,6 +79,7 @@ class _AnalogClockState extends State<AnalogClock> {
   var _condition = '';
   var _location = '';
   Timer _timer;
+  double opacity = 0.0;
 
   @override
   void initState() {
@@ -63,6 +103,7 @@ class _AnalogClockState extends State<AnalogClock> {
   void dispose() {
     _timer?.cancel();
     widget.model.removeListener(_updateModel);
+     widget.model.dispose();
     super.dispose();
   }
 
@@ -73,6 +114,11 @@ class _AnalogClockState extends State<AnalogClock> {
       _condition = widget.model.weatherString;
       _location = widget.model.location;
     });
+  }
+
+  void _pulse() {
+    if(opacity == 0.0){opacity = 1;}
+    else{ opacity = 0.0;}
   }
 
   void _updateTime() {
@@ -89,42 +135,73 @@ class _AnalogClockState extends State<AnalogClock> {
 
   @override
   Widget build(BuildContext context) {
-    // There are many ways to apply themes to your clock. Some are:
-    //  - Inherit the parent Theme (see ClockCustomizer in the
-    //    flutter_clock_helper package).
-    //  - Override the Theme.of(context).colorScheme.
-    //  - Create your own [ThemeData], demonstrated in [AnalogClock].
-    //  - Create a map of [Color]s to custom keys, demonstrated in
-    //    [DigitalClock].
-    final customTheme = Theme.of(context).brightness == Brightness.light
-        ? Theme.of(context).copyWith(
-            // Hour hand.
-            primaryColor: Color(0xFF4285F4),
-            // Minute hand.
-            highlightColor: Color(0xFF8AB4F8),
-            // Second hand.
-            accentColor: Color(0xFF669DF6),
-            backgroundColor: Color(0xFFD2E3FC),
-          )
-        : Theme.of(context).copyWith(
-            primaryColor: Color(0xFFD2E3FC),
-            highlightColor: Color(0xFF4285F4),
-            accentColor: Color(0xFF8AB4F8),
-            backgroundColor: Color(0xFF3C4043),
-          );
     DateTime _dateTime = DateTime.now();
     final time = DateFormat.Hms().format(_dateTime);
     final hour = DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
     final minute = DateFormat('mm').format(_dateTime);
+    final second = DateFormat('ss').format(_dateTime);
+    final secPercent = 100 / 60 * _now.second / 100;
+    final minPercent = 100 / 60 * _now.minute / 100;
+    final hourPercent = widget.model.is24HourFormat ? 100 / 24 * _now.hour / 100 : 100 / 12 * ( _now.hour - 12 ) / 100;
+    final colors = Theme.of(context).brightness == Brightness.light ? _lightTheme : _darkTheme;
+    final fontSize = MediaQuery.of(context).size.width / 25;
+    shadow(br, odx, ody, color){
+      return  Shadow(
+        blurRadius: br,
+        color: color,
+        offset: Offset(odx, ody),
+      );
+    }
+    final defaultStyle = TextStyle(
+      color: colors[_Element.text],
+      fontFamily: 'Monoton',
+      fontSize: fontSize,
+      shadows: [shadow(0,5,0, colors[_Element.shadow])],
+    );
+    final dividerStyle = TextStyle(
+      color: colors[_Element.text],
+      fontFamily: 'Tomorrow',
+      fontSize: fontSize,
+      shadows: [shadow(0,10,0, colors[_Element.shadow])],
+    );
+    final infoStyle = TextStyle(
+      color: colors[_Element.text],
+      fontFamily: 'Tomorrow',
+      fontSize: MediaQuery.of(context).size.width / 40,
+      shadows: [shadow(0,2,0, Colors.black)],
+    );
+    final clock = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        DefaultTextStyle(style: defaultStyle, child: Text(hour)),
+        AnimatedOpacity(
+          duration: Duration(milliseconds: 500),
+          opacity: opacity,
+          child: Padding(padding: EdgeInsets.fromLTRB(0, 0, 0, fontSize / 4), child: DefaultTextStyle(style: dividerStyle, child: Text(":"))), 
+        ),
+        DefaultTextStyle(style: defaultStyle, child: Text(minute)),
+      ],
+    );
     final weatherInfo = DefaultTextStyle(
-      style: TextStyle(color: customTheme.primaryColor),
+      style: infoStyle,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(hour +":"+minute),
-          Text(_temperature),
-          Text(_temperatureRange),
-          Text(_condition),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+               _getWetherImage(_condition),
+              Column(
+                children: [
+                  Text(_temperature),
+                  Text(_temperatureRange),
+                ]
+              ),
+            ],
+          ),
           Text(_location),
         ],
       ),
@@ -136,42 +213,41 @@ class _AnalogClockState extends State<AnalogClock> {
         value: time,
       ),
       child: Container(
-        color: customTheme.backgroundColor,
+        color: colors[_Element.background],
         child: Stack(
+          fit: StackFit.expand,
+          alignment: AlignmentDirectional.center,
           children: [
-            // Example of a hand drawn with [CustomPainter].
-            DrawnHand(
-              color: customTheme.accentColor,
-              thickness: 4,
-              size: 1,
-              angleRadians: _now.second * radiansPerTick,
-            ),
-            DrawnHand(
-              color: customTheme.highlightColor,
-              thickness: 16,
-              size: 0.9,
-              angleRadians: _now.minute * radiansPerTick,
-            ),
-            // Example of a hand drawn with [Container].
-            ContainerHand(
-              color: Colors.transparent,
-              size: 0.5,
-              angleRadians: _now.hour * radiansPerHour +
-                  (_now.minute / 60) * radiansPerHour,
-              child: Transform.translate(
-                offset: Offset(0.0, -60.0),
-                child: Container(
-                  width: 32,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: customTheme.primaryColor,
-                  ),
+            CircularPercentIndicator(
+              radius: MediaQuery.of(context).size.width / 2.5,
+              lineWidth: MediaQuery.of(context).size.width / 40,
+              percent: hourPercent,
+              backgroundColor: colors[_Element.background],
+              progressColor: colors[_Element.hour],
+              center:
+                CircularPercentIndicator(
+                  radius: MediaQuery.of(context).size.width / 3,
+                  lineWidth: MediaQuery.of(context).size.width / 50,
+                  percent: minPercent,
+                  backgroundColor: colors[_Element.background],
+                  progressColor: colors[_Element.minute],
+                  center:
+                    CircularPercentIndicator(
+                      radius: MediaQuery.of(context).size.width / 3.75,
+                      lineWidth: MediaQuery.of(context).size.width / 50,
+                      percent: secPercent,
+                      center: DefaultTextStyle(
+                        style: defaultStyle,
+                        child: clock
+                      ),
+                      backgroundColor: colors[_Element.background],
+                      progressColor: colors[_Element.second],
+                    ),
                 ),
               ),
-            ),
             Positioned(
               left: 0,
-              bottom: 0,
+              top: 0,
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: weatherInfo,
