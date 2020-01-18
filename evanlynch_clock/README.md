@@ -1,12 +1,16 @@
-# Analog Clock
+# evanlynch_clock
 
-This app is an example of an analog clock.
-It has a light theme and a dark theme, and displays sample weather and location data.
+A new Flutter project.
 
-<img src='evan_clock.gif' width='350'>
+## Getting Started
 
-<img src='evan_clock_dark.png' width='350'>
+This project is a starting point for a Flutter application.
 
-<img src='evan_light.png' width='350'>
+A few resources to get you started if this is your first Flutter project:
 
-Icons Form : https://www.deviantart.com/kortoik/art/Sticker-Weather-Icons-78827487
+- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+
+For help getting started with Flutter, view our
+[online documentation](https://flutter.dev/docs), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

@@ -43,16 +43,6 @@ final _darkTheme = {
   _Element.second: Colors.orangeAccent,
 };
 
-var timeOfDay = "day";
-
-_getWetherImage(condition) {
-  if (condition == null) {
-    return Image.asset("assets/img/weather/na.png");
-  }
-  return Image.asset(
-      "assets/img/weather/" + timeOfDay + "_" + condition + ".png");
-}
-
 /// A basic analog clock.
 ///
 /// You can do better than this!
@@ -71,6 +61,7 @@ class _AnalogClockState extends State<AnalogClock> {
   var _temperatureRange = '';
   var _condition = '';
   var _location = '';
+  var _timeOfDay = "day";
   Timer _timer;
   double opacity = 0.0;
 
@@ -100,6 +91,14 @@ class _AnalogClockState extends State<AnalogClock> {
     super.dispose();
   }
 
+  _getWetherImage(condition) {
+    if (condition == null) {
+      return Image.asset("assets/img/weather/na.png");
+    }
+    return Image.asset(
+        "assets/img/weather/" + _timeOfDay + "_" + condition + ".png");
+  }
+
   void _updateModel() {
     setState(() {
       _temperature = widget.model.temperatureString;
@@ -118,6 +117,9 @@ class _AnalogClockState extends State<AnalogClock> {
   }
 
   _getTimePercent(fullLevel, now) {
+    if(now == -12){
+      now = 0;
+    }
     return 100 / fullLevel * now / 100;
   }
 
@@ -131,10 +133,11 @@ class _AnalogClockState extends State<AnalogClock> {
         _updateTime,
       );
       _pulse();
-      if (_now.hour >= 18) {
-        timeOfDay = "night";
+       if (_now.hour > 18 || _now.hour < 6) {
+        _timeOfDay = "night";
+      }else{
+        _timeOfDay = "day";
       }
-      ;
     });
   }
 
@@ -154,7 +157,7 @@ class _AnalogClockState extends State<AnalogClock> {
     final colors = Theme.of(context).brightness == Brightness.light
         ? _lightTheme
         : _darkTheme;
-    final fontSize = MediaQuery.of(context).size.width / 25;
+    final fontSize = MediaQuery.of(context).size.width / 20;
     shadow(br, odx, ody, color) {
       return Shadow(
         blurRadius: br,
@@ -167,19 +170,19 @@ class _AnalogClockState extends State<AnalogClock> {
       color: colors[_Element.text],
       fontFamily: 'Audiowide',
       fontSize: fontSize,
-      shadows: [shadow(0, 5, 0, colors[_Element.shadow])],
+      shadows: [shadow(0.0, 4.0, 0.0, colors[_Element.shadow])],
     );
     final secStyle = TextStyle(
       color: colors[_Element.text],
       fontFamily: 'Audiowide',
       fontSize: fontSize / 2,
-      shadows: [shadow(0, 5, 0, colors[_Element.shadow])],
+      shadows: [shadow(0.0, 3.0, 0.0, colors[_Element.shadow])],
     );
     final infoStyle = TextStyle(
       color: colors[_Element.infoText],
       fontFamily: 'Exo2',
-      fontSize: MediaQuery.of(context).size.width / 90,
-      shadows: [shadow(0, 2, 0, colors[_Element.infoShadow])],
+      fontSize: MediaQuery.of(context).size.width / 50,
+      shadows: [shadow(0.0, 2.0, 0.0, colors[_Element.infoShadow])],
     );
     final clock = Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -212,6 +215,7 @@ class _AnalogClockState extends State<AnalogClock> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
+          Text(_location),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             mainAxisSize: MainAxisSize.min,
@@ -226,7 +230,6 @@ class _AnalogClockState extends State<AnalogClock> {
               ]),
             ],
           ),
-          Text(_location),
         ],
       ),
     );
