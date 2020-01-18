@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:html';
 
 import 'package:flutter_clock_helper/model.dart';
 import 'package:flutter/material.dart';
@@ -11,53 +10,47 @@ import 'package:flutter/semantics.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
-
 enum _Element {
-  background, text, shadow, hour, minute, second,
+  background,
+  text,
+  infoText,
+  infoShadow,
+  shadow,
+  hour,
+  minute,
+  second,
 }
 
 final _lightTheme = {
-  _Element.background: Colors.white,
-  _Element.text: Colors.redAccent,
-  _Element.shadow: Colors.black45,
-  _Element.hour: Colors.pinkAccent,
-  _Element.minute: Colors.cyanAccent,
-  _Element.second: Colors.orangeAccent,
-};
-
-final _darkTheme = {
-  _Element.background: Colors.black,
-  _Element.text: Colors.red,
-  _Element.shadow: Colors.white54,
+  _Element.background: Colors.blue,
+  _Element.text: Colors.white,
+  _Element.infoText: Colors.white70,
+  _Element.shadow: Colors.black38,
+  _Element.infoShadow: Colors.black38,
   _Element.hour: Colors.pink,
-  _Element.minute: Colors.cyan,
+  _Element.minute: Colors.green,
   _Element.second: Colors.orange,
 };
 
-_getWetherImage(condition){
-  switch(condition){
-    case "cloudy":{
-      return Image.asset("assets/img/weather/cloudy.png");
-    }break;
-    case "foggy":{
-      return Image.asset("assets/img/weather/foggy.png");
-    }break;
-    case "rainy":{
-      return Image.asset("assets/img/weather/rainy.png");
-    }break;
-    case "snowy":{
-      return Image.asset("assets/img/weather/snowy.png");
-    }break;
-    case "sunny":{
-      return Image.asset("assets/img/weather/sunny.png");
-    }break;
-    case "thunder":{
-      return Image.asset("assets/img/weather/thunder.png");
-    }break;
-    case "windy":{
-      return Image.asset("assets/img/weather/windy.png");
-    }break;
+final _darkTheme = {
+  _Element.background: Colors.black45,
+  _Element.text: Colors.yellow,
+  _Element.infoText: Colors.yellowAccent,
+  _Element.shadow: Colors.white,
+  _Element.infoShadow: Colors.white,
+  _Element.hour: Colors.pinkAccent,
+  _Element.minute: Colors.greenAccent,
+  _Element.second: Colors.orangeAccent,
+};
+
+var timeOfDay = "day";
+
+_getWetherImage(condition) {
+  if (condition == null) {
+    return Image.asset("assets/img/weather/na.png");
   }
+  return Image.asset(
+      "assets/img/weather/" + timeOfDay + "_" + condition + ".png");
 }
 
 /// A basic analog clock.
@@ -103,7 +96,7 @@ class _AnalogClockState extends State<AnalogClock> {
   void dispose() {
     _timer?.cancel();
     widget.model.removeListener(_updateModel);
-     widget.model.dispose();
+    widget.model.dispose();
     super.dispose();
   }
 
@@ -117,8 +110,15 @@ class _AnalogClockState extends State<AnalogClock> {
   }
 
   void _pulse() {
-    if(opacity == 0.0){opacity = 1;}
-    else{ opacity = 0.0;}
+    if (opacity == 0.0) {
+      opacity = 1;
+    } else {
+      opacity = 0.0;
+    }
+  }
+
+  _getTimePercent(fullLevel, now) {
+    return 100 / fullLevel * now / 100;
   }
 
   void _updateTime() {
@@ -130,6 +130,11 @@ class _AnalogClockState extends State<AnalogClock> {
         Duration(seconds: 1) - Duration(milliseconds: _now.millisecond),
         _updateTime,
       );
+      _pulse();
+      if (_now.hour >= 18) {
+        timeOfDay = "night";
+      }
+      ;
     });
   }
 
@@ -137,52 +142,70 @@ class _AnalogClockState extends State<AnalogClock> {
   Widget build(BuildContext context) {
     DateTime _dateTime = DateTime.now();
     final time = DateFormat.Hms().format(_dateTime);
-    final hour = DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
+    final hour =
+        DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
     final minute = DateFormat('mm').format(_dateTime);
     final second = DateFormat('ss').format(_dateTime);
-    final secPercent = 100 / 60 * _now.second / 100;
-    final minPercent = 100 / 60 * _now.minute / 100;
-    final hourPercent = widget.model.is24HourFormat ? 100 / 24 * _now.hour / 100 : 100 / 12 * ( _now.hour - 12 ) / 100;
-    final colors = Theme.of(context).brightness == Brightness.light ? _lightTheme : _darkTheme;
+    final secPercent = _getTimePercent(60, _now.second);
+    final minPercent = _getTimePercent(60, _now.minute);
+    final hourPercent = widget.model.is24HourFormat
+        ? _getTimePercent(24, _now.hour)
+        : _getTimePercent(12, (_now.hour - 12));
+    final colors = Theme.of(context).brightness == Brightness.light
+        ? _lightTheme
+        : _darkTheme;
     final fontSize = MediaQuery.of(context).size.width / 25;
-    shadow(br, odx, ody, color){
-      return  Shadow(
+    shadow(br, odx, ody, color) {
+      return Shadow(
         blurRadius: br,
         color: color,
         offset: Offset(odx, ody),
       );
     }
+
     final defaultStyle = TextStyle(
       color: colors[_Element.text],
-      fontFamily: 'Monoton',
+      fontFamily: 'Audiowide',
       fontSize: fontSize,
-      shadows: [shadow(0,5,0, colors[_Element.shadow])],
+      shadows: [shadow(0, 5, 0, colors[_Element.shadow])],
     );
-    final dividerStyle = TextStyle(
+    final secStyle = TextStyle(
       color: colors[_Element.text],
-      fontFamily: 'Tomorrow',
-      fontSize: fontSize,
-      shadows: [shadow(0,10,0, colors[_Element.shadow])],
+      fontFamily: 'Audiowide',
+      fontSize: fontSize / 2,
+      shadows: [shadow(0, 5, 0, colors[_Element.shadow])],
     );
     final infoStyle = TextStyle(
-      color: colors[_Element.text],
-      fontFamily: 'Tomorrow',
-      fontSize: MediaQuery.of(context).size.width / 40,
-      shadows: [shadow(0,2,0, Colors.black)],
+      color: colors[_Element.infoText],
+      fontFamily: 'Exo2',
+      fontSize: MediaQuery.of(context).size.width / 90,
+      shadows: [shadow(0, 2, 0, colors[_Element.infoShadow])],
     );
     final clock = Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        DefaultTextStyle(style: defaultStyle, child: Text(hour)),
-        AnimatedOpacity(
-          duration: Duration(milliseconds: 500),
-          opacity: opacity,
-          child: Padding(padding: EdgeInsets.fromLTRB(0, 0, 0, fontSize / 4), child: DefaultTextStyle(style: dividerStyle, child: Text(":"))), 
-        ),
-        DefaultTextStyle(style: defaultStyle, child: Text(minute)),
-      ],
-    );
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: <Widget>[
+                  DefaultTextStyle(style: defaultStyle, child: Text(hour)),
+                  AnimatedOpacity(
+                    duration: Duration(milliseconds: 500),
+                    opacity: opacity,
+                    child: Padding(
+                        padding: EdgeInsets.fromLTRB(5, 0, 5, fontSize / 6),
+                        child: DefaultTextStyle(
+                            style: defaultStyle, child: Text(":"))),
+                  ),
+                  DefaultTextStyle(style: defaultStyle, child: Text(minute)),
+                ],
+              ),
+              DefaultTextStyle(style: secStyle, child: Text(second)),
+            ],
+          )
+        ]);
     final weatherInfo = DefaultTextStyle(
       style: infoStyle,
       child: Column(
@@ -193,13 +216,15 @@ class _AnalogClockState extends State<AnalogClock> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             mainAxisSize: MainAxisSize.min,
             children: [
-               _getWetherImage(_condition),
-              Column(
-                children: [
-                  Text(_temperature),
-                  Text(_temperatureRange),
-                ]
+              Padding(
+                padding: EdgeInsets.fromLTRB(5, 0, 5, 0),
+                child: _getWetherImage(_condition),
               ),
+              Column(children: [
+                Text(_temperature),
+                Text(_temperatureRange),
+                Text(timeOfDay),
+              ]),
             ],
           ),
           Text(_location),
@@ -222,32 +247,27 @@ class _AnalogClockState extends State<AnalogClock> {
               radius: MediaQuery.of(context).size.width / 2.5,
               lineWidth: MediaQuery.of(context).size.width / 40,
               percent: hourPercent,
-              backgroundColor: colors[_Element.background],
+              backgroundColor: Colors.transparent,
               progressColor: colors[_Element.hour],
-              center:
-                CircularPercentIndicator(
-                  radius: MediaQuery.of(context).size.width / 3,
-                  lineWidth: MediaQuery.of(context).size.width / 50,
-                  percent: minPercent,
-                  backgroundColor: colors[_Element.background],
-                  progressColor: colors[_Element.minute],
-                  center:
-                    CircularPercentIndicator(
-                      radius: MediaQuery.of(context).size.width / 3.75,
-                      lineWidth: MediaQuery.of(context).size.width / 50,
-                      percent: secPercent,
-                      center: DefaultTextStyle(
-                        style: defaultStyle,
-                        child: clock
-                      ),
-                      backgroundColor: colors[_Element.background],
-                      progressColor: colors[_Element.second],
-                    ),
+              center: CircularPercentIndicator(
+                radius: MediaQuery.of(context).size.width / 3,
+                lineWidth: MediaQuery.of(context).size.width / 50,
+                percent: minPercent,
+                backgroundColor: Colors.transparent,
+                progressColor: colors[_Element.minute],
+                center: CircularPercentIndicator(
+                  radius: MediaQuery.of(context).size.width / 3.75,
+                  lineWidth: MediaQuery.of(context).size.width / 55,
+                  percent: secPercent,
+                  center: DefaultTextStyle(style: defaultStyle, child: clock),
+                  backgroundColor: Colors.transparent,
+                  progressColor: colors[_Element.second],
                 ),
               ),
+            ),
             Positioned(
               left: 0,
-              top: 0,
+              bottom: 0,
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: weatherInfo,
