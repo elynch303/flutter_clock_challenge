@@ -223,7 +223,6 @@ class _AnalogClockState extends State<AnalogClock> {
               Column(children: [
                 Text(_temperature),
                 Text(_temperatureRange),
-                Text(timeOfDay),
               ]),
             ],
           ),
